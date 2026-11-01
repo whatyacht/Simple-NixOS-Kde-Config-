@@ -400,7 +400,7 @@ nix.optimise = {
     gnumake
     pkg-config
     mangohud
-    proton-qt
+    protonup-qt
     inotify-tools
 
     discord
