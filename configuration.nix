@@ -63,7 +63,7 @@
   # ------------------------------------------
   # BOOTLOADER & KERNEL
   # ------------------------------------------
-  
+
   boot = {
     kernelPackages = pkgs.linuxPackages;
     # After rebuild, change to pkgs.linuxPackages_zen;
@@ -383,9 +383,7 @@ nix.optimise = {
     capSysNice = false;
   };
 
-  programs.git.enable = true;
   programs.nano.enable = true;
-  programs.vscode.enable = true;
   programs.gamemode.enable = true;
 
   environment.systemPackages = with pkgs; [
