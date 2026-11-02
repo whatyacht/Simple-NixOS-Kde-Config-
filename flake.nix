@@ -1,3 +1,4 @@
+
 {
   description = "NixOS Configuration";
 
@@ -8,9 +9,14 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nightcap = {
+      url = "github:CoderDayton/nightcap";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }: {
+  outputs = { self, nixpkgs, home-manager, nightcap, ... }: {
     nixosConfigurations.whatyacht = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
 
@@ -20,6 +26,10 @@
         home-manager.nixosModules.home-manager
 
         {
+          environment.systemPackages = [
+            nightcap.packages.x86_64-linux.default
+          ];
+
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
 
