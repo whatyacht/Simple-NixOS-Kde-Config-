@@ -10,13 +10,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixcord = {
+      url = "github:4evy/nixcord";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nightcap = {
       url = "github:CoderDayton/nightcap";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, nightcap, ... }: {
+  outputs = inputs@{ self, nixpkgs, home-manager, nightcap, nixcord, ... }: {
     nixosConfigurations.whatyacht = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
 
@@ -32,6 +37,7 @@
 
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
 
           home-manager.users.whatyacht = import ./home.nix;
         }
