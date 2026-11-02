@@ -42,22 +42,23 @@
 
       allowed-users = [ "@wheel" ];
 
-      extra-substituters = [
+      substituters = [
+        "https://cache.nixos.org"
         "https://nix-community.cachix.org"
       ];
 
-      # Nix Community cache signing key
-      extra-trusted-public-keys = [
+      trusted-public-keys = [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       ];
     };
   };
 
   documentation = {
-    doc.enable = false;
+    doc.enable = true;
     dev.enable = false;
     info.enable = false;
-    nixos.enable = false;
+    nixos.enable = true;
   };
 
   # ------------------------------------------
@@ -65,13 +66,12 @@
   # ------------------------------------------
 
   boot = {
-    kernelPackages = pkgs.linuxPackages;
-    # After rebuild, change to pkgs.linuxPackages_zen;
+    kernelPackages = pkgs.linuxPackages_zen;
 
     loader = {
       systemd-boot = {
         enable = true;
-        configurationLimit = 2;
+        configurationLimit = 5;
         editor = false;
       };
 
@@ -80,51 +80,53 @@
     };
 
     kernel.sysctl = {
-      # Kernel information protection
+      # --Kernel information protection--
       "kernel.dmesg_restrict" = 1;
       "kernel.kptr_restrict" = 2;
 
-      # BPF hardening
+      # --BPF hardening--
       "net.core.bpf_jit_harden" = 2;
       "kernel.unprivileged_bpf_disabled" = 1;
 
-      # Process isolation
+      # --Process isolation--
       "kernel.yama.ptrace_scope" = 1;
 
-      # Kernel loading restrictions
+      # --Kernel loading restrictions--
       "kernel.kexec_load_disabled" = 1;
 
-      # Disable Magic SysRq
+      # --Disable Magic SysRq--
       "kernel.sysrq" = 0;
 
-      # Restrict performance monitoring
-      "kernel.perf_event_paranoid" = 3;
-
-      # Filesystem protections
+      # --Filesystem protections--
       "fs.protected_fifos" = 2;
       "fs.protected_regular" = 2;
       "fs.suid_dumpable" = 0;
 
-      # TTY protections
+      # --Fewer Stalls during large Writes--
+      "vm.dirty_bytes" = 268435456; # 256 MB
+      "vm.dirty_background_bytes" = 67108864; # 64 MB
+      "vm.vfs_cache_pressure" = 50;
+
+      # --TTY protections--
       "dev.tty.ldisc_autoload" = 0;
 
-      # Restrict userfaultfd
+      # --Restrict userfaultfd--
       "vm.unprivileged_userfaultfd" = 0;
 
-      # Network anti-spoofing
+      # --Network anti-spoofing--
       "net.ipv4.conf.all.rp_filter" = 1;
       "net.ipv4.conf.default.rp_filter" = 1;
 
-      # SYN flood protection
+      # --SYN flood protection--
       "net.ipv4.tcp_syncookies" = 1;
 
-      # Disable source routing
+      # --Disable source routing--
       "net.ipv4.conf.all.accept_source_route" = 0;
       "net.ipv4.conf.default.accept_source_route" = 0;
       "net.ipv6.conf.all.accept_source_route" = 0;
       "net.ipv6.conf.default.accept_source_route" = 0;
 
-      # Ignore ICMP redirects
+      # --Ignore ICMP redirects--
       "net.ipv4.conf.all.accept_redirects" = 0;
       "net.ipv4.conf.default.accept_redirects" = 0;
       "net.ipv4.conf.all.secure_redirects" = 0;
@@ -132,15 +134,15 @@
       "net.ipv6.conf.all.accept_redirects" = 0;
       "net.ipv6.conf.default.accept_redirects" = 0;
 
-      # Disable outgoing ICMP redirects
+      # --Disable outgoing ICMP redirects--
       "net.ipv4.conf.all.send_redirects" = 0;
       "net.ipv4.conf.default.send_redirects" = 0;
 
-      # ICMP protections
+      # --ICMP protections--
       "net.ipv4.icmp_echo_ignore_broadcasts" = 1;
       "net.ipv4.icmp_ignore_bogus_error_responses" = 1;
 
-      # TCP protection
+      # --TCP protection--
       "net.ipv4.tcp_rfc1337" = 1;
     };
 
@@ -168,6 +170,7 @@
   zramSwap = {
     enable = true;
     memoryPercent = 25;
+    algorithm = "zstd";
   };
 
   # ------------------------------------------
@@ -189,10 +192,17 @@
 
     nvidia = {
       open = true;
-      modesetting.enable = true;
       nvidiaSettings = true;
-      powerManagement.enable = false;
     };
+  };
+
+  # ------------------------------------------
+  # KDE WALLET / PAM
+  # ------------------------------------------
+
+  security.pam.services.sddm.kwallet = {
+    enable = true;
+    package = pkgs.kdePackages.kwallet-pam;
   };
 
   # ------------------------------------------
@@ -210,23 +220,34 @@
     };
   };
 
-  # environment.plasma6.excludePackages = with pkgs.kdePackages; [
-  #   Add Packages Here
-  # ];
+  environment.plasma6.excludePackages = with pkgs.kdePackages; [
+    discover
+    elisa
+  ];
+
+  programs.kde-pim.enable = false;
 
   # ------------------------------------------
   # AUDIO
   # ------------------------------------------
 
   services.pulseaudio.enable = false;
-
   security.rtkit.enable = true;
 
   services.pipewire = {
     enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
+
+    alsa = {
+      enable = true;
+      support32Bit = true;
+    };
+
+    wireplumber.extraConfig."10-disable-libcamera" = {
+      "wireplumber.profiles".main."monitor.libcamera" = "disabled";
+    };
+
     pulse.enable = true;
+    jack.enable = true;
     wireplumber.enable = true;
   };
 
@@ -312,7 +333,7 @@
   # SERVICES ENABLEMENTS/DISABLEMENTS
   # ------------------------------------------
 
-  # Enablements
+  # --Enablements--
    services.dbus.enable = true;
    security.polkit.enable = true;
    services.udisks2.enable = true;
@@ -322,7 +343,7 @@
 
    xdg.portal.enable = true;
 
-  # Disablements
+  # --Disablements--
    services.orca.enable = false;
    services.avahi.enable = false;
    services.openssh.enable = false;
@@ -340,48 +361,23 @@
   # AUTOMATIC OPTIMIZATIONS
   # ------------------------------------------
 
-  systemd.services.nixos-generation-cleanup = {
-    description = "NixOS Generation Cleanup";
-
-    serviceConfig = {
-      Type = "oneshot";
-    };
-
-    path = [ pkgs.nix ];
-
-    script = ''
-      nix-env \
-        --profile /nix/var/nix/profiles/system \
-        --delete-generations +2
-
-      nix-collect-garbage
-    '';
-  };
-
-    systemd.timers.nixos-generation-cleanup = {
-      wantedBy = [ "timers.target" ];
-
-      timerConfig = {
-      OnCalendar = "weekly";
-      Persistent = true;
-    };
-  };
-
-  nix.settings.auto-optimise-store = true;
-
   nix.optimise = {
     automatic = true;
     dates = [ "weekly" ];
   };
 
+  programs.nh = {
+    enable = true;
+
+    clean = {
+      enable = true;
+      extraArgs = "--keep 5 --keep-since 7d";
+    };
+  };
+
   # ------------------------------------------
   # PACKAGES & PROGRAMS
   # ------------------------------------------
-
-  programs.nh = {
-    enable = true;
-    clean.enable = false;
-  };
 
   programs.steam = {
     enable = true;
@@ -399,8 +395,19 @@
     capSysNice = false;
   };
 
+  programs.gamemode = {
+   enable = true;
+   enableRenice = true;
+
+    settings = {
+      general = {
+        renice = 10;
+        softrealtime = "auto";
+      };
+    };
+  };
+
   programs.nano.enable = true;
-  programs.gamemode.enable = true;
 
   environment.systemPackages = with pkgs; [
     wget
@@ -415,7 +422,6 @@
     protonup-qt
     inotify-tools
 
-    discord
     brave
     qbittorrent
     kitty
