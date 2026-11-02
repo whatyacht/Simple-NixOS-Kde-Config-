@@ -270,7 +270,7 @@
       rebuild = "nh os switch /etc/nixos";
       build = "nh os build /etc/nixos";
       trybuild = "nh os test /etc/nixos";
-      update = "nix flake update /etc/nixos";
+      update = "nix flake update --flake /etc/nixos";
       clean = "nh clean all";
     };
   };
