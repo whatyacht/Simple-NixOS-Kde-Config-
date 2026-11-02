@@ -239,6 +239,8 @@
     firewall.enable = true;
     hostName = "whatyacht";
 
+    nftables.enable = true;
+
     nameservers = [
       "1.1.1.1#one.one.one.one"
       "1.0.0.1#one.one.one.one"
@@ -261,7 +263,17 @@
   # SHELL
   # ------------------------------------------
 
-  programs.fish.enable = true;
+  programs.fish = {
+    enable = true;
+
+    shellAliases = {
+      rebuild = "nh os switch /etc/nixos";
+      build = "nh os build /etc/nixos";
+      trybuild = "nh os test /etc/nixos";
+      update = "nix flake update /etc/nixos";
+      clean = "nh clean all";
+    };
+  };
 
   users.defaultUserShell = pkgs.fish;
 
@@ -327,36 +339,38 @@
   # ------------------------------------------
 
   systemd.services.nixos-generation-cleanup = {
-  description = "NixOS Generation Cleanup";
+    description = "NixOS Generation Cleanup";
 
-  serviceConfig = {
-    Type = "oneshot";
+    serviceConfig = {
+      Type = "oneshot";
+    };
+
+    path = [ pkgs.nix ];
+
+    script = ''
+      nix-env \
+        --profile /nix/var/nix/profiles/system \
+        --delete-generations +2
+
+      nix-collect-garbage
+    '';
   };
 
-  path = [ pkgs.nix ];
+    systemd.timers.nixos-generation-cleanup = {
+      wantedBy = [ "timers.target" ];
 
-  script = ''
-    nix-env \
-      --profile /nix/var/nix/profiles/system \
-      --delete-generations +2
-
-    nix-collect-garbage
-  '';
-};
-
-systemd.timers.nixos-generation-cleanup = {
-  wantedBy = [ "timers.target" ];
-
-  timerConfig = {
-    OnCalendar = "weekly";
-    Persistent = true;
+      timerConfig = {
+      OnCalendar = "weekly";
+      Persistent = true;
+    };
   };
-};
 
-nix.optimise = {
-  automatic = true;
-  dates = [ "weekly" ];
-};
+  nix.settings.auto-optimise-store = true;
+
+  nix.optimise = {
+    automatic = true;
+    dates = [ "weekly" ];
+  };
 
   # ------------------------------------------
   # PACKAGES & PROGRAMS
@@ -391,13 +405,11 @@ nix.optimise = {
     curl
     unzip
     zip
-    fastfetch
     impression
     gparted
     gcc
     gnumake
     pkg-config
-    mangohud
     protonup-qt
     inotify-tools
 
