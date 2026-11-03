@@ -5,6 +5,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    spicetify-nix.url = "github:Gerg-L/spicetify-nix";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -14,14 +16,9 @@
       url = "github:4evy/nixcord";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    nightcap = {
-      url = "github:CoderDayton/nightcap";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, nightcap, nixcord, ... }: {
+  outputs = inputs@{ self, nixpkgs, home-manager, nixcord, ... }: {
     nixosConfigurations.whatyacht = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
 
@@ -32,7 +29,7 @@
 
         {
           environment.systemPackages = [
-            nightcap.packages.x86_64-linux.default
+            
           ];
 
           home-manager.useGlobalPkgs = true;
