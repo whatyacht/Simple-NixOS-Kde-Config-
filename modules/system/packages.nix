@@ -24,7 +24,6 @@
       kdePackages.kate
       kdePackages.kcalc
 
-      spotify
       prismlauncher
       vlc
     ];
