@@ -59,6 +59,7 @@
             # Modules with their own imports
             self.modules.generic.home-spicetify
             self.modules.generic.home-nixcord
+            self.modules.generic.home-mocktail
           ];
         };
       }
