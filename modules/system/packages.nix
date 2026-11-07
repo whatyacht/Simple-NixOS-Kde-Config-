@@ -16,10 +16,10 @@
       protonup-qt
       inotify-tools
 
-      brave
+      librewolf
+      ungoogled-chromium
       qbittorrent
       kitty
-      xclicker
 
       kdePackages.kate
       kdePackages.kcalc
